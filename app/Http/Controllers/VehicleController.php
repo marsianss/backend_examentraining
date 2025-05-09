@@ -17,8 +17,9 @@ class VehicleController extends Controller
     public function vehiclesByInstructor($id)
     {
         $instructor = Instructeur::findOrFail($id);
+        $instructors = Instructeur::all();
         $vehicles = $instructor->vehicles()->orderBy('Rijbewijscategorie')->get();
-        return view('vehicles_by_instructor', compact('instructor', 'vehicles'));
+        return view('vehicles_by_instructor', compact('instructor', 'instructors', 'vehicles'));
     }
 
     public function editVehicle($id)
