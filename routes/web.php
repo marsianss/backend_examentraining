@@ -1,11 +1,14 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\VehicleController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [VehicleController::class, 'home'])->name('home');
+Route::get('/instructeur/{id}/voertuigen', [VehicleController::class, 'vehiclesByInstructor'])->name('instructor.vehicles');
+Route::get('/voertuig/{id}/edit', [VehicleController::class, 'editVehicle'])->name('vehicle.edit');
+Route::post('/voertuig/{id}/update', [VehicleController::class, 'updateVehicle'])->name('vehicle.update');
+Route::get('/voertuiggegevens', [VehicleController::class, 'vehicleOverview'])->name('vehicle.overview');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
