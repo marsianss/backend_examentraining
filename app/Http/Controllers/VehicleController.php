@@ -25,15 +25,38 @@ class VehicleController extends Controller
     public function editVehicle($id)
     {
         $vehicle = Voertuig::findOrFail($id);
-        return view('edit_vehicle', compact('vehicle'));
+        
+        // Check if vehicle is already assigned to any instructor
+        $isAssigned = $vehicle->voertuigInstructeurs()->exists();
+        
+        return view('edit_vehicle', compact('vehicle', 'isAssigned'));
     }
 
     public function updateVehicle(Request $request, $id)
     {
         $vehicle = Voertuig::findOrFail($id);
-        $vehicle->update($request->only(['Type', 'Brandstof', 'Kenteken']));
-        $instructeurId = $vehicle->voertuigInstructeurs()->first()->InstructeurId;
-        return redirect()->route('instructor.vehicles', $instructeurId)->with('success', 'Voertuiggegevens bijgewerkt.');
+        
+        // For vehicles that are already assigned, only allow updating certain fields
+        if ($vehicle->voertuigInstructeurs()->exists()) {
+            $vehicle->update($request->only(['Type', 'Brandstof', 'Kenteken']));
+            // Get the instructor ID from the first assignment
+            $instructeurId = $vehicle->voertuigInstructeurs()->first()->InstructeurId;
+            return redirect()->route('instructors.vehicles', $instructeurId)
+                ->with('success', 'Voertuiggegevens bijgewerkt.');
+        } else {
+            // For unassigned vehicles, allow updating all fields including Bouwjaar
+            $vehicle->update($request->only(['Type', 'Brandstof', 'Kenteken', 'Bouwjaar']));
+            
+            // If this is part of an assignment flow, redirect to the instructor's page
+            if ($request->has('instructorId')) {
+                return redirect()->route('instructors.available-vehicles', $request->instructorId)
+                    ->with('success', 'Voertuiggegevens bijgewerkt.');
+            }
+            
+            // Otherwise redirect to vehicle overview
+            return redirect()->route('vehicle.overview')
+                ->with('success', 'Voertuiggegevens bijgewerkt.');
+        }
     }
 
     public function vehicleOverview()
