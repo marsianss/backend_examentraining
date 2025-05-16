@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class VoertuigInstructeur extends Model
 {
     protected $table = 'voertuig_instructeur';
+    public $timestamps = false; // Disable Laravel's automatic timestamp handling
 
     protected $fillable = [
         'VoertuigId',
