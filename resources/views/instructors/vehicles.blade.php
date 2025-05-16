@@ -33,6 +33,12 @@
         <h1>Door instructeur gebruikte voertuigen</h1>
         <h2>{{ $instructor->Voornaam }} {{ $instructor->Tussenvoegsel }} {{ $instructor->Achternaam }}</h2>
 
+        @if(session('success'))
+            <div class="alert alert-success mt-3">
+                {{ session('success') }}
+            </div>
+        @endif
+
         <div class="card mt-4">
             <div class="card-body">
                 <table class="table table-striped">
@@ -57,9 +63,14 @@
                             <td>{{ date('d-m-Y', strtotime($vehicle->Bouwjaar)) }}</td>
                             <td>{{ $vehicle->Brandstof }}</td>
                             <td>
-                                <a href="{{ route('vehicle.edit', $vehicle->id) }}" class="btn btn-sm btn-warning">
-                                    <i class="bi bi-pencil"></i> Wijzigen
-                                </a>
+                                <div class="btn-group">
+                                    <a href="{{ route('vehicle.edit', $vehicle->id) }}" class="btn btn-sm btn-warning" title="Wijzigen voertuiggegevens">
+                                        <i class="bi bi-pencil"></i> Wijzigen
+                                    </a>
+                                    <a href="{{ route('vehicle.edit', $vehicle->id) }}?reassign=true" class="btn btn-sm btn-info ms-1" title="Voertuig opnieuw toewijzen">
+                                        <i class="bi bi-arrow-left-right"></i> Hertoewijzen
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                         @endforeach

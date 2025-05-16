@@ -45,6 +45,12 @@
         <h1>Instructeurs in dienst</h1>
         <p>Aantal instructeurs: {{ $instructors->count() }}</p>
 
+        @if(session('success'))
+            <div class="alert alert-success mt-3">
+                {{ session('success') }}
+            </div>
+        @endif
+
         <div class="card mt-4">
             <div class="card-body">
                 <table class="table table-striped table-bordered">
@@ -69,12 +75,10 @@
                             <td>{{ \Carbon\Carbon::parse($instructor->DatumInDienst)->format('d-m-Y') }}</td>
                             <td>{{ $instructor->AantalSterren }}</td>
                             <td class="text-center">
-                                <a href="{{ route('instructors.vehicles', $instructor->id) }}">
-                                    @foreach($instructor->voertuigInstructeurs as $index => $voertuigInstructeur)
-                                        @if ($index < 3)
-                                            <i class="bi bi-car-front car-icon"></i>
-                                        @endif
-                                    @endforeach
+                                <a href="{{ route('instructors.vehicles', $instructor->id) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-car-front"></i>
+                                    <span class="badge bg-primary">{{ $instructor->voertuigInstructeurs->count() }}</span>
+                                    <span class="ms-1">Bekijken</span>
                                 </a>
                             </td>
                         </tr>
