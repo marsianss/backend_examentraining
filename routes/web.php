@@ -6,10 +6,14 @@ use App\Http\Controllers\InstructorController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [VehicleController::class, 'home'])->name('home');
-Route::get('/instructeur/{id}/voertuigen', [VehicleController::class, 'vehiclesByInstructor'])->name('instructor.vehicles');
 Route::get('/voertuig/{id}/edit', [VehicleController::class, 'editVehicle'])->name('vehicle.edit');
 Route::post('/voertuig/{id}/update', [VehicleController::class, 'updateVehicle'])->name('vehicle.update');
 Route::get('/voertuiggegevens', [VehicleController::class, 'vehicleOverview'])->name('vehicle.overview');
+
+// Redirect old route to new route for compatibility
+Route::get('/instructeur/{id}/voertuigen', function($id) {
+    return redirect()->route('instructors.vehicles', $id);
+});
 
 Route::get('/instructeurs', [InstructorController::class, 'index'])->name('instructors.index');
 Route::get('/instructeurs/{id}/voertuigen', [InstructorController::class, 'showVehicles'])->name('instructors.vehicles');

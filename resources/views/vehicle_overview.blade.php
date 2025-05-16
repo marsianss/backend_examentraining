@@ -1,5 +1,8 @@
-<html>
+<!DOCTYPE html>
+<html lang="nl">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Voertuiggegevens</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
@@ -37,34 +40,59 @@
             </div>
         @endif
 
-        <div class="card mt-4">
-            <div class="card-header bg-light">
-                <h5 class="card-title mb-0">Selecteer een instructeur</h5>
-            </div>
-            <div class="card-body">
-                <form class="d-flex" method="GET" action="" id="instructorForm">
-                    <select class="form-select me-2" id="instructor" name="instructor" onchange="if (this.value) { window.location.href = '/instructeur/' + this.value + '/voertuigen'; }">
-                        <option value="">-- Kies een instructeur --</option>
-                        @foreach ($instructors as $instructor)
-                            <option value="{{ $instructor->id }}">
-                                {{ $instructor->Voornaam }} {{ $instructor->Tussenvoegsel ? $instructor->Tussenvoegsel . ' ' : '' }}{{ $instructor->Achternaam }} ({{ $instructor->AantalSterren }} ⭐)
-                            </option>
-                        @endforeach
-                    </select>
-                    <button type="button" class="btn btn-primary" onclick="if (document.getElementById('instructor').value) { window.location.href = '/instructeur/' + document.getElementById('instructor').value + '/voertuigen'; }">
-                        <i class="bi bi-search"></i> Bekijken
-                    </button>
-                </form>
-                <p class="mt-3 mb-0 text-muted">
-                    <i class="bi bi-info-circle"></i> Selecteer een instructeur uit de dropdown om hun voertuigen te bekijken.
-                </p>
-            </div>
-        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Instructeurs</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="list-group list-group-flush">
+                            @foreach ($instructors as $instructor)
+                                <a href="{{ route('instructors.vehicles', $instructor->id) }}"
+                                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ $instructor->Voornaam }}
+                                            {{ $instructor->Tussenvoegsel ? $instructor->Tussenvoegsel . ' ' : '' }}
+                                            {{ $instructor->Achternaam }}</strong>
+                                        <div class="text-muted small">
+                                            {{ $instructor->AantalSterren }} ⭐ | In dienst sinds: {{ \Carbon\Carbon::parse($instructor->DatumInDienst)->format('d-m-Y') }}
+                                        </div>
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill">
+                                        {{ $instructor->voertuigInstructeurs->count() }}
+                                        <i class="bi bi-car-front ms-1"></i>
+                                    </span>
+                                </a>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
 
-        <div class="mt-4">
-            <a href="{{ route('instructors.index') }}" class="btn btn-primary">
-                <i class="bi bi-arrow-left"></i> Terug naar instructeurs
-            </a>
+                <div class="mt-3">
+                    <a href="{{ route('instructors.index') }}" class="btn btn-primary">
+                        <i class="bi bi-arrow-left"></i> Terug naar instructeurs
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">Selecteer een instructeur</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="d-flex align-items-center justify-content-center" style="min-height: 200px;">
+                            <div class="text-center">
+                                <i class="bi bi-car-front" style="font-size: 4rem; color: #ddd;"></i>
+                                <p class="mt-3 mb-0 text-muted">
+                                    Selecteer een instructeur uit de lijst links om hun voertuigen te bekijken.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 

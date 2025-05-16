@@ -112,7 +112,8 @@ class VehicleController extends Controller
 
     public function vehicleOverview()
     {
-        $instructors = Instructeur::all();
+        // Get instructors with eager loading of their vehicles for the count badges
+        $instructors = Instructeur::with('voertuigInstructeurs')->orderBy('AantalSterren', 'desc')->get();
         return view('vehicle_overview', compact('instructors'));
     }
 }
