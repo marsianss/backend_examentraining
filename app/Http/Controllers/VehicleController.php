@@ -5,20 +5,24 @@ namespace App\Http\Controllers;
 use App\Models\Voertuig;
 use App\Models\Instructeur;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class VehicleController extends Controller
 {
     public function home()
     {
-        $instructors = Instructeur::all();
+        // Gebruik stored procedure voor het ophalen van instructeurs
+        $instructors = DB::select('CALL sp_GetInstructeursSortedByStars()');
         return view('home', compact('instructors'));
     }
 
     public function vehiclesByInstructor($id)
     {
         $instructor = Instructeur::findOrFail($id);
-        $instructors = Instructeur::all();
-        $vehicles = $instructor->vehicles()->orderBy('Rijbewijscategorie')->get();
+        // Gebruik stored procedure voor het ophalen van alle instructeurs
+        $instructors = DB::select('CALL sp_GetInstructeursSortedByStars()');
+        // Gebruik stored procedure voor het ophalen van voertuigen voor deze instructeur
+        $vehicles = DB::select('CALL sp_GetVehiclesByInstructor(?)', [$id]);
         return view('vehicles_by_instructor', compact('instructor', 'instructors', 'vehicles'));
     }
 
@@ -47,51 +51,51 @@ class VehicleController extends Controller
     public function updateVehicle(Request $request, $id)
     {
         $vehicle = Voertuig::findOrFail($id);
+        $isAssigned = $vehicle->voertuigInstructeurs()->exists();
 
-        // For vehicles that are already assigned, only allow updating certain fields
-        if ($vehicle->voertuigInstructeurs()->exists()) {
-            $vehicle->update($request->only(['Type', 'Brandstof', 'Kenteken']));
+        // Update voertuig gegevens via stored procedure
+        DB::statement('CALL sp_UpdateVehicle(?, ?, ?, ?, ?, ?)', [
+            $id,
+            $request->Type,
+            $request->Brandstof,
+            $request->Kenteken,
+            $request->Bouwjaar,
+            $isAssigned
+        ]);
 
-            // Get the current instructor assignment
-            $voertuigInstructeur = $vehicle->voertuigInstructeurs()->first();
-            $currentInstructorId = $voertuigInstructeur->InstructeurId;
+        if ($isAssigned) {
+            $currentInstructorId = $vehicle->voertuigInstructeurs()->first()->InstructeurId;
 
-            // Check if the instructor has been changed
+            // Check if instructor has changed
             if ($request->has('instructor_id') && $request->instructor_id && $request->instructor_id != $currentInstructorId) {
                 // Get instructor names for the message
                 $oldInstructor = Instructeur::find($currentInstructorId);
                 $newInstructor = Instructeur::find($request->instructor_id);
 
-                // Update assignment to new instructor
-                $voertuigInstructeur->update([
-                    'InstructeurId' => $request->instructor_id,
-                    'DatumToekenning' => now()->format('Y-m-d'),
+                // Gebruik stored procedure voor het hertoewijzen van het voertuig
+                DB::statement('CALL sp_ReassignVehicle(?, ?, ?)', [
+                    $id,
+                    $currentInstructorId,
+                    $request->instructor_id
                 ]);
 
                 // Create success message with instructor names
                 $successMessage = "Voertuig {$vehicle->Kenteken} ({$vehicle->Type}) is opnieuw toegewezen van {$oldInstructor->Voornaam} {$oldInstructor->Achternaam} naar {$newInstructor->Voornaam} {$newInstructor->Achternaam}";
 
-                // Redirect to the new instructor's vehicle page
                 return redirect()->route('instructors.vehicles', $request->instructor_id)
                     ->with('success', $successMessage);
             }
 
-            // If instructor hasn't changed, redirect to the current instructor's vehicle page
             return redirect()->route('instructors.vehicles', $currentInstructorId)
                 ->with('success', "Voertuiggegevens voor {$vehicle->Kenteken} zijn bijgewerkt.");
         } else {
-            // For unassigned vehicles, allow updating all fields including Bouwjaar
-            $vehicle->update($request->only(['Type', 'Brandstof', 'Kenteken', 'Bouwjaar']));
-
-            // If an instructor ID is provided, assign the vehicle to that instructor
             if ($request->has('instructor_id') && $request->instructor_id) {
-                // Get the instructor name for the message
                 $instructor = Instructeur::find($request->instructor_id);
 
-                \App\Models\VoertuigInstructeur::create([
-                    'VoertuigId' => $vehicle->id,
-                    'InstructeurId' => $request->instructor_id,
-                    'DatumToekenning' => now()->format('Y-m-d'),
+                // Gebruik stored procedure voor het toewijzen van het voertuig
+                DB::statement('CALL sp_AssignVehicleToInstructor(?, ?)', [
+                    $id,
+                    $request->instructor_id
                 ]);
 
                 return redirect()->route('instructors.vehicles', $request->instructor_id)

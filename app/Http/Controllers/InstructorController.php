@@ -4,20 +4,22 @@ namespace App\Http\Controllers;
 
 use App\Models\Instructeur;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class InstructorController extends Controller
 {
     public function index()
     {
-        // Get instructors sorted by 'AantalSterren' in descending order
-        $instructors = Instructeur::orderBy('AantalSterren', 'desc')->get();
+        // Gebruik stored procedure voor het ophalen van instructeurs gesorteerd op sterren
+        $instructors = DB::select('CALL sp_GetInstructeursSortedByStars()');
         return view('instructors.index', compact('instructors'));
     }
 
     public function showVehicles($id)
     {
         $instructor = Instructeur::findOrFail($id);
-        $vehicles = $instructor->vehicles()->get();
+        // Gebruik stored procedure voor het ophalen van voertuigen voor deze instructeur
+        $vehicles = DB::select('CALL sp_GetVehiclesByInstructor(?)', [$id]);
 
         return view('instructors.vehicles', compact('instructor', 'vehicles'));
     }
@@ -25,14 +27,8 @@ class InstructorController extends Controller
     public function availableVehicles($id)
     {
         $instructor = Instructeur::findOrFail($id);
-
-        // Get all vehicle IDs already assigned to any instructor
-        $assignedVehicleIds = \App\Models\VoertuigInstructeur::pluck('VoertuigId')->toArray();
-
-        // Get vehicles that are not assigned to any instructor
-        $availableVehicles = \App\Models\Voertuig::whereNotIn('id', $assignedVehicleIds)
-            ->orderBy('TypeVoertuigId')
-            ->get();
+        // Gebruik stored procedure voor het ophalen van beschikbare voertuigen
+        $availableVehicles = DB::select('CALL sp_GetAvailableVehicles()');
 
         return view('instructors.available_vehicles', compact('instructor', 'availableVehicles'));
     }
@@ -42,11 +38,10 @@ class InstructorController extends Controller
         $instructor = Instructeur::findOrFail($instructorId);
         $vehicle = \App\Models\Voertuig::findOrFail($vehicleId);
 
-        // Create new assignment
-        \App\Models\VoertuigInstructeur::create([
-            'VoertuigId' => $vehicleId,
-            'InstructeurId' => $instructorId,
-            'DatumToekenning' => now()->format('Y-m-d'),
+        // Gebruik stored procedure voor het toewijzen van een voertuig
+        DB::statement('CALL sp_AssignVehicleToInstructor(?, ?)', [
+            $vehicleId,
+            $instructorId
         ]);
 
         return redirect()->route('instructors.vehicles', $instructorId)
